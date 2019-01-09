@@ -1,0 +1,91 @@
+use super::*;
+use std::fmt::{Debug, Display, Formatter};
+use std::ops::*;
+
+pub mod camera;
+
+pub struct Point4<N>(pub [N; 4]);
+
+impl<N: Clone> Clone for Point4<N> {
+    fn clone(&self) -> Self {
+        Point4([
+            self.0[0].clone(),
+            self.0[1].clone(),
+            self.0[2].clone(),
+            self.0[3].clone(),
+        ])
+    }
+}
+
+impl<N: Copy> Copy for Point4<N> {}
+
+impl<N: Debug> Debug for Point4<N> {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "Point4[{:?}, {:?}, {:?}, {:?}]",
+            self.0[0], self.0[1], self.0[2], self.0[3]
+        )
+    }
+}
+
+impl<N: Display> Display for Point4<N> {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "[{}, {}, {}, {}]",
+            self.0[0], self.0[1], self.0[2], self.0[3]
+        )
+    }
+}
+
+impl<N> Index<usize> for Point4<N> {
+    type Output = N;
+    fn index(&self, index: usize) -> &N {
+        &self.0[index]
+    }
+}
+
+impl<N> IndexMut<usize> for Point4<N> {
+    fn index_mut(&mut self, index: usize) -> &mut N {
+        &mut self.0[index]
+    }
+}
+
+impl<N> Point4<N> {
+    pub fn xyz(self) -> Point3<N>
+    where
+        N: Copy,
+    {
+        Point3([self.0[0], self.0[1], self.0[2]])
+    }
+}
+
+pub type Quaternion = Point4<f64>;
+
+impl Point4<f64> {
+    pub fn q_unit() -> Self {
+        Point4([1.0, 0.0, 0.0, 0.0])
+    }
+
+    pub fn unit(self) -> Self {
+        self / self.mag()
+    }
+
+    pub fn mag(self) -> f64 {
+        (self.0[0].powi(2) + self.0[1].powi(2) + self.0[2].powi(2) + self.0[3].powi(2)).sqrt()
+    }
+
+    pub fn axis_angle(axis: Point3<f64>, angle: f64) -> Self {
+        let a2 = angle / 2.0;
+        let sin = a2.sin();
+        Point4([axis[0] * sin, axis[1] * sin, axis[2] * sin, a2.cos()])
+    }
+}
+
+impl Div<f64> for Point4<f64> {
+    type Output = Self;
+    fn div(self, r: f64) -> Self::Output {
+        Point4([self.0[0] / r, self.0[1] / r, self.0[2] / r, self.0[3] / r])
+    }
+}

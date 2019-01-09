@@ -1,0 +1,193 @@
+use super::*;
+use std::convert::TryInto;
+use std::fmt::{Debug, Display, Formatter};
+use std::ops::*;
+
+pub mod draw;
+pub mod matrix;
+pub mod polygon;
+
+use polygon::*;
+
+pub struct Point2<N>(pub [N; 2]);
+
+pub type IPoint2 = Point2<isize>;
+pub type ILine2 = Point2<IPoint2>;
+
+impl<N: Clone> Clone for Point2<N> {
+    fn clone(&self) -> Self {
+        Point2([self.0[0].clone(), self.0[1].clone()])
+    }
+}
+
+impl<N: Debug> Debug for Point2<N> {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "Point2[{:?}, {:?}]", self.0[0], self.0[1])
+    }
+}
+
+impl<N: Display> Display for Point2<N> {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "[{}, {}]", self.0[0], self.0[1])
+    }
+}
+
+impl<N: Copy> Copy for Point2<N> {}
+
+impl<L, R, O> Add<Point2<R>> for Point2<L>
+where
+    L: Add<R, Output = O> + Copy,
+    R: Copy,
+{
+    type Output = Point2<O>;
+    fn add(self, r: Point2<R>) -> Self::Output {
+        Point2([self.0[0] + r.0[0], self.0[1] + r.0[1]])
+    }
+}
+
+impl<L, R, O> Sub<Point2<R>> for Point2<L>
+where
+    L: Sub<R, Output = O> + Copy,
+    R: Copy,
+{
+    type Output = Point2<O>;
+    fn sub(self, r: Point2<R>) -> Self::Output {
+        Point2([self.0[0] - r.0[0], self.0[1] - r.0[1]])
+    }
+}
+
+impl<L, R, O> Mul<R> for Point2<L>
+where
+    L: Mul<R, Output = O> + Copy,
+    R: Copy,
+{
+    type Output = Point2<O>;
+    fn mul(self, r: R) -> Self::Output {
+        Point2([self.0[0] * r, self.0[1] * r])
+    }
+}
+
+impl<L, R, O> Div<R> for Point2<L>
+where
+    L: Div<R, Output = O> + Copy,
+    R: Copy,
+{
+    type Output = Point2<O>;
+    fn div(self, r: R) -> Self::Output {
+        Point2([self.0[0] / r, self.0[1] / r])
+    }
+}
+
+impl<L: Neg + Copy> Neg for Point2<L> {
+    type Output = Point2<L::Output>;
+    fn neg(self) -> Self::Output {
+        Point2([-self.0[0], -self.0[1]])
+    }
+}
+
+impl<N> Index<usize> for Point2<N> {
+    type Output = N;
+    fn index(&self, index: usize) -> &N {
+        &self.0[index]
+    }
+}
+
+impl<N> IndexMut<usize> for Point2<N> {
+    fn index_mut(&mut self, index: usize) -> &mut N {
+        &mut self.0[index]
+    }
+}
+
+impl<N> From<[N; 2]> for Point2<N> {
+    fn from(arr: [N; 2]) -> Point2<N> {
+        Point2(arr)
+    }
+}
+
+impl<N> From<(N, N)> for Point2<N> {
+    fn from(arr: (N, N)) -> Point2<N> {
+        Point2([arr.0, arr.1])
+    }
+}
+
+impl<N> Point2<N> {
+    pub fn new(x: N, y: N) -> Point2<N> {
+        Point2([x, y])
+    }
+
+    pub fn reverse(self) -> Self
+    where
+        N: Copy,
+    {
+        Point2([self.0[1], self.0[0]])
+    }
+
+    pub fn delta(self) -> <N as Sub>::Output
+    where
+        N: Sub + Copy,
+    {
+        self.0[1] - self.0[0]
+    }
+
+    pub fn dot<R, M, O>(self, r: Point2<R>) -> O
+    where
+        N: Mul<R, Output = M> + Copy,
+        R: Copy,
+        M: Add<M, Output = O>,
+    {
+        self.0[0] * r.0[0] + self.0[1] * r.0[1]
+    }
+
+    pub fn cross<R, M, S>(self, r: Point2<R>) -> S
+    where
+        N: Mul<R, Output = M> + Copy,
+        R: Copy,
+        M: Sub<Output = S>,
+    {
+        self.0[0] * r.0[1] - self.0[1] * r.0[0]
+    }
+
+    pub fn norm_ccw(self) -> Self
+    where
+        N: Neg<Output = N> + Copy,
+    {
+        Point2([self.0[1], -self.0[0]])
+    }
+
+    pub fn norm_cw(self) -> Self
+    where
+        N: Neg<Output = N> + Copy,
+    {
+        Point2([-self.0[1], self.0[0]])
+    }
+
+    pub fn cs_clipcode<R>(self, bound: Point2<Point2<R>>) -> u8
+    where
+        N: PartialOrd<R>,
+    {
+        const UP: u8 = 0b1000;
+        const DOWN: u8 = 0b0100;
+        const LEFT: u8 = 0b0010;
+        const RIGHT: u8 = 0b0001;
+
+        let mut res = 0x0000;
+        if self[0] < bound[0][0] {
+            res &= LEFT
+        } else if self[0] > bound[1][0] {
+            res &= RIGHT
+        }
+
+        if self[1] < bound[0][1] {
+            res &= DOWN
+        } else if self[1] > bound[1][1] {
+            res &= UP
+        }
+        res
+    }
+}
+
+impl Point2<Point2<f64>> {
+    
+
+    
+}
