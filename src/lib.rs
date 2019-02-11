@@ -1,5 +1,3 @@
-#![feature(try_from)]
-#![feature(vec_resize_with)]
 #[macro_use]
 pub extern crate approx;
 pub extern crate nalgebra as na;

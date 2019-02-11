@@ -1,7 +1,6 @@
 use super::{camera::*, *};
 use na::{Isometry3, Matrix4, Point3, Scalar, Vector2};
 use plane::*;
-use std::convert::TryInto;
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::*;
 
