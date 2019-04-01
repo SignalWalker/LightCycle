@@ -22,7 +22,7 @@ impl Camera {
         }
     }
 
-    pub fn fresh_iso(&mut self) -> &Matrix4<f64> {
+    pub fn fresh_mat(&mut self) -> &Matrix4<f64> {
         if self.stale {
             self.cache = self.persp.as_matrix()
                 * Isometry3::face_towards(&self.pos, &(self.pos + self.forward), &self.up)
