@@ -49,16 +49,18 @@ impl Camera {
         self.stale = true;
     }
 
-    pub fn rot(&mut self, q: &UnitQuaternion<f32>) {
-        self.forward = q * self.forward;
-        self.up = q * self.up;
+    pub fn rot(&mut self, scaled_axis: &Vector3<f32>) {
+        let q = UnitQuaternion::from_scaled_axis(*scaled_axis);
+        self.forward = q * self.forward.normalize();
+        self.up = q * self.up.normalize();
         self.stale = true;
     }
 
     pub fn look_at(&mut self, pos: &Point3<f32>) {
         let old = self.forward;
         self.forward = (pos - self.pos).normalize();
-        self.up = UnitQuaternion::rotation_between(&old, &self.forward).unwrap() * self.up;
+        self.up =
+            (UnitQuaternion::rotation_between(&old, &self.forward).unwrap() * self.up).normalize();
         self.stale = true;
     }
 }
