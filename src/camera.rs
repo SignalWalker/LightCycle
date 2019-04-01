@@ -34,7 +34,7 @@ impl Camera {
     }
 
     pub fn right(&self) -> Vector3<f32> {
-        self.forward.cross(&self.up)
+        self.up.cross(&self.forward) // (1, 0, 0) if up is (0, 1, 0) and forward is (0, 0, 1)
     }
 
     pub fn resize(&mut self, width: f32, height: f32) {
