@@ -1,14 +1,7 @@
-use super::super::{
-    camera::*,
-    plane::{polygon::*, *},
-    *,
-};
+use super::super::{camera::*, plane::polygon::*, *};
 //use super::matrix::*;
 use super::*;
-use na::{
-    angle, normalize, Isometry3, Matrix, Matrix3, Matrix4, Point, Point3, Point4, Scalar,
-    Transform3, Translation3, Vector3, Vector4,
-};
+use na::{Matrix3, Matrix4, Point3, Scalar, Vector3, Vector4};
 use std::ops::{Index, IndexMut};
 
 #[derive(Clone, Debug)]
@@ -126,7 +119,7 @@ impl Polyhedron<f64> {
     pub fn draw(&self, buf: &mut Buffer<Color>, model_world: Matrix4<f64>, camera: &Camera) {
         let width = buf.size[0] as f64;
         let height = buf.size[1] as f64;
-        let model_view = camera.iso().to_homogeneous() * model_world;
+        let model_view = camera.cache * model_world;
         let transform = camera.persp.to_homogeneous() * model_view;
         for i in 0..self.faces.len() {
             let face = &self.faces[i];
