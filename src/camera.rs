@@ -1,5 +1,5 @@
 use na::Matrix4;
-use na::{Isometry3, Perspective3, Point3, Vector3};
+use na::{Isometry3, Perspective3, Point3, UnitQuaternion, Vector3};
 
 pub struct Camera {
     pub stale: bool,
@@ -11,7 +11,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(pos: Point3<f32>, rot: Vector3<f32>, persp: Perspective3<f32>) -> Camera {
+    pub fn new(pos: Point3<f32>, persp: Perspective3<f32>) -> Camera {
         Camera {
             stale: true,
             cache: Matrix4::identity(),
@@ -33,12 +33,11 @@ impl Camera {
     }
 
     pub fn right(&self) -> Vector3<f32> {
-        let ymp = 0.0f32; //self.rot.y - std::f32::consts::PI / 2.0;
-        Vector3::new(ymp.sin(), 0.0, ymp.cos())
+        self.forward.cross(&self.up)
     }
 
-    pub fn resize(&mut self, size: [f32; 2]) {
-        self.persp.set_aspect(size[0] / size[1]);
+    pub fn resize(&mut self, width: f32, height: f32) {
+        self.persp.set_aspect(width / height);
         self.stale = true;
     }
 
@@ -46,6 +45,19 @@ impl Camera {
         self.pos += self.forward * z;
         self.pos += self.up * y;
         self.pos += self.right() * x;
+        self.stale = true;
+    }
+
+    pub fn rot(&mut self, q: &UnitQuaternion<f32>) {
+        self.forward = q * self.forward;
+        self.up = q * self.up;
+        self.stale = true;
+    }
+
+    pub fn look_at(&mut self, pos: &Point3<f32>) {
+        let old = self.forward;
+        self.forward = (pos - self.pos).normalize();
+        self.up = UnitQuaternion::rotation_between(&old, &self.forward).unwrap() * self.up;
         self.stale = true;
     }
 }
