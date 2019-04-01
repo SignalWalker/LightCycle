@@ -17,8 +17,8 @@ impl Camera {
             stale: true,
             cache: Matrix4::identity(),
             pos,
-            forward: Vector3::identity(),
-            up: Vector3::identity(),
+            forward: Vector3::new(0.0, 0.0, 1.0),
+            up: Vector3::new(0.0, 1.0, 0.0),
             persp,
         }
     }
