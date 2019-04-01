@@ -26,7 +26,7 @@ pub fn draw_line(
     model_world: Matrix4<f64>,
     camera: &Camera,
 ) {
-    let mat = camera.cache * model_world;
+    let mat = /*camera.cache * */ model_world;
     let size = Point2::new(buf.size[0] as f64, buf.size[1] as f64);
     let p1 = mat * l[0].to_homogeneous();
     let p2 = mat * l[1].to_homogeneous();

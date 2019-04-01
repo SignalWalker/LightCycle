@@ -119,8 +119,8 @@ impl Polyhedron<f64> {
     pub fn draw(&self, buf: &mut Buffer<Color>, model_world: Matrix4<f64>, camera: &Camera) {
         let width = buf.size[0] as f64;
         let height = buf.size[1] as f64;
-        let model_view = camera.cache * model_world;
-        let transform = camera.persp.to_homogeneous() * model_view;
+        let model_view = /* camera.cache * */ model_world;
+        let transform = /* camera.persp.to_homogeneous() * */ model_view;
         for i in 0..self.faces.len() {
             let face = &self.faces[i];
 
@@ -140,7 +140,7 @@ impl Polyhedron<f64> {
                         .to_homogeneous(),
             )
             .unwrap();
-            if norm.dot(&(camera.pos - self[face[0]])) < 0.0 {
+            if norm.dot(&(/* camera.pos - */Point3::new(0.0, 0.0, 0.0) - self[face[0]])) < 0.0 {
                 //if camera.forward.dot(&norm) > 0.0 && norm.dot(&camera.forward) < 0.0 {
                 continue;
             }
