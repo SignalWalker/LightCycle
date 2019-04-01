@@ -1,6 +1,7 @@
 use na::Matrix4;
 use na::{Isometry3, Perspective3, Point3, UnitQuaternion, Vector3};
 
+#[derive(Debug)]
 pub struct Camera {
     pub stale: bool,
     pub cache: Matrix4<f32>,
