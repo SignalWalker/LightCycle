@@ -42,10 +42,10 @@ impl Camera {
         self.stale = true;
     }
 
-    pub fn mov(&mut self, vec: &Vector3<f64>) {
-        self.pos += self.forward * vec[2];
-        self.pos += self.up * vec[1];
-        self.pos += self.right() * vec[0];
+    pub fn mov(&mut self, x: f64, y: f64, z: f64) {
+        self.pos += self.forward * z;
+        self.pos += self.up * y;
+        self.pos += self.right() * x;
         self.stale = true;
     }
 }
