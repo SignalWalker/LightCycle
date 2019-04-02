@@ -1,5 +1,4 @@
-use na::Matrix4;
-use na::{Isometry3, Perspective3, Point3, UnitQuaternion, Vector3};
+use na::{Matrix4, Perspective3, Point3, UnitQuaternion, Vector3};
 
 #[derive(Debug)]
 pub struct Camera {
@@ -17,8 +16,8 @@ impl Camera {
             stale: true,
             cache: Matrix4::identity(),
             pos,
-            forward: Vector3::new(0.0, 0.0, 1.0),
-            up: Vector3::new(0.0, 1.0, 0.0),
+            forward: Vector3::z(),
+            up: Vector3::y(),
             persp,
         }
     }
@@ -26,8 +25,7 @@ impl Camera {
     pub fn fresh_mat(&mut self) -> &Matrix4<f32> {
         if self.stale {
             self.cache = self.persp.as_matrix()
-                * Isometry3::face_towards(&self.pos, &(self.pos + self.forward), &self.up)
-                    .to_homogeneous();
+                * Matrix4::look_at_rh(&self.pos, &(self.pos + self.forward), &self.up);
             self.stale = false;
         }
         &self.cache
