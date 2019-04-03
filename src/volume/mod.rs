@@ -1,13 +1,13 @@
-use super::{camera::*, *};
-use na::{Matrix4, Point3, Scalar, Vector2};
+use super::*;
+use na::{Point3, Vector2};
 
 pub mod polyhedron;
 
-pub type Line3<N: Scalar> = [Point3<N>; 2];
+pub type Line3<N> = [Point3<N>; 2];
 
 pub fn line_intersection(a: &Line3<f64>, b: &Line3<f64>) -> Option<Point3<f64>> {
-    let delta_a = a[1] - a[0];
-    let delta_b = b[1] - b[0];
+    let _delta_a = a[1] - a[0];
+    let _delta_b = b[1] - b[0];
     panic!("Not Implemented: 3D Line Intersection")
 }
 
@@ -17,39 +17,6 @@ pub fn ndc_to_screen(ndc: &Point3<f64>, size: &Point2<f64>, clip: &Vector2<f64>)
         (res[0] + 1.0) * (size[0] / 2.0) + clip[0],
         (res[1] + 1.0) * (size[1] / 2.0) + clip[1],
     )
-}
-
-pub fn draw_line(
-    buf: &mut Buffer<Color>,
-    c: Color,
-    l: Line3<f64>,
-    model_world: Matrix4<f64>,
-    camera: &Camera,
-) {
-    let mat = /*camera.cache * */ model_world;
-    let size = Point2::new(buf.size[0] as f64, buf.size[1] as f64);
-    let p1 = mat * l[0].to_homogeneous();
-    let p2 = mat * l[1].to_homogeneous();
-    let s1 = ndc_to_screen(
-        &Point3::from_homogeneous(p1).unwrap(),
-        &size,
-        &l[0].coords.xy(),
-    );
-    let s2 = ndc_to_screen(
-        &Point3::from_homogeneous(p2).unwrap(),
-        &size,
-        &l[1].coords.xy(),
-    );
-    let line = Some(([s1, s2], ())); //plane::lb_clip(&[s1, s2], &[Point2::new(0.0, 0.0), size]);
-    let line = match line {
-        Some((l, ..)) => [
-            Point2::new(l[0].x as isize, l[0].y as isize),
-            Point2::new(l[1].x as isize, l[1].y as isize),
-        ],
-        None => return,
-    };
-    println!("Drawing Norm: {:?}", line);
-    plane::draw_line(buf, c, line)
 }
 
 //use polyhedron::*;

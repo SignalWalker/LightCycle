@@ -1,7 +1,7 @@
 use super::super::*;
 use super::*;
-use na::{Point, Point2, Scalar, Vector, Vector2};
-use std::fmt::{Debug, Display, Formatter};
+use na::{Point2, Scalar, Vector2};
+use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug)]
 pub struct Polygon<N: Scalar> {
@@ -61,7 +61,7 @@ impl<N: Display + Scalar> Display for Polygon<N> {
 }
 
 impl<N: Scalar> Polygon<N> {
-    pub fn edges<'a>(&'a self) -> EdgeIterator<'a, N> {
+    pub fn edges(&self) -> EdgeIterator<'_, N> {
         EdgeIterator::new(self)
     }
 }
@@ -203,7 +203,7 @@ impl Polygon<f64> {
                 }
                 a = b
             }
-            if res.len() == 0 {
+            if res.is_empty() {
                 return None;
             }
             Some(Polygon { points: res })
@@ -255,62 +255,6 @@ impl Polygon<f64> {
             }
         }
         res
-    }
-
-    pub fn draw(&self, buf: &mut Buffer<Color>, color: Color) {
-        //println!("Drawing: {}", self);
-        //println!("Clipped: {}", d);
-        let min_y = self.min_y() as isize;
-        let max_y = self.max_y() as isize;
-        //println!("min: {}, max: {}", min_y, max_y);
-        for y in min_y as isize..=max_y as isize {
-            //println!("Y: {}", y);
-            let scan = [
-                Point2::new(0.0, y as f64),
-                Point2::new(buf.size[0] as f64, y as f64),
-            ];
-            let line = {
-                //println!("Intersecting: {}", scan);
-                let intersect = self.intersection_line(scan);
-                if intersect.len() != 2 {
-                    continue;
-                }
-                //println!("Intersect: {:?}", intersect);
-                [
-                    match intersect[0] {
-                        Either::A(p) => p,
-                        _ => panic!("Intersection failure: {:?}", intersect[0]),
-                    },
-                    match intersect[1] {
-                        Either::A(p) => p,
-                        _ => panic!("Intersection failure: {:?}", intersect[1]),
-                    },
-                ]
-            };
-            let line = [
-                Point2::new(line[0][0] as isize, line[0][1] as isize),
-                Point2::new(line[1][0] as isize, line[1][1] as isize),
-            ];
-            //println!("Drawing line: {}", line);
-            draw_line(buf, color, line);
-            let red = [255, 125, 125, 255];
-            let green = [125, 255, 125, 255];
-            let blue = [125, 125, 255, 255];
-            let colors = [red, green, blue];
-            let mut i = 0;
-            for edge in self.edges() {
-                let p1 = edge[0];
-                let p2 = edge[1];
-                let color = colors[i % colors.len()];
-                let line = [
-                    Point2::new(p1[0] as isize, p1[1] as isize),
-                    Point2::new(p2[0] as isize, p2[1] as isize),
-                ];
-                //println!("Wire {:?}: [\n{}\n{}\n]", color, line[0], line[1]);
-                draw_line(buf, color, line);
-                i += 1;
-            }
-        }
     }
 }
 

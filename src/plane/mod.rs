@@ -58,159 +58,6 @@ pub fn inf_line_intersection(
     None
 }
 
-pub fn draw_rect(buf: &mut Buffer<Color>, c: Color, l: Line2<isize>) {
-    let mut index = l[0][0] + l[0][1] * buf.size[0] as isize;
-    let delta = l[1] - l[0];
-    let dx = delta[0];
-    let dy = delta[1].signum() * buf.size[0] as isize;
-    //use std::time::Instant;
-    //let rect_time = Instant::now();
-    let mut row = Vec::new();
-    row.resize_with(dx.abs() as usize + 1, || c);
-    for _y in l[0][1]..=l[1][1] {
-        (&mut buf.data[index as usize..=(index + dx) as usize]).copy_from_slice(&row);
-        index += dy;
-        // let left = index;
-        // for _x in l[0][0]..=l[1][0] {
-        //     buf.data[index as usize] = c;
-        //     index += dx;
-        // }
-        // index = left + dy;
-    }
-    //println!("Rect Time: {:?}", rect_time.elapsed());
-}
-
-// pub fn draw_border_rect(buf: &mut Buffer<Color>, bc: Color, fc: Color, l: ILine2, t: isize) {
-//     let mut index = (l[0][0] + l[0][1] * buf.width as isize) as usize;
-//     for _y in l[0][1]..=l[1][1] {
-//         for _x in l[0][0]..=l[1][1] {
-//             buf.data[index] = fc;
-//             index += 1;
-//         }
-//         index += buf.width;
-//     }
-// }
-
-pub fn draw_line(buf: &mut Buffer<Color>, c: Color, l: Line2<isize>) {
-    let delta = l[1] - l[0];
-    //println!("Line [{}, {}] Delta: {}", l[0], l[1], delta);
-    let (dx, dy) = (delta[0], delta[1]);
-    //println!("Line [{}, {}] dx: {}, dy: {}", l[0], l[1], dx, dy);
-    if dx == 0 && dy != 0 {
-        draw_line_vert(buf, c, l[0], l[1][1])
-    } else if dy == 0 {
-        draw_line_hori(buf, c, l[0], l[1][0])
-    } else if dx.abs() == dy.abs() {
-        draw_line_diag(buf, c, l)
-    } else {
-        draw_line_brs(buf, c, dx, dy, l)
-    }
-}
-
-fn draw_line_vert(buf: &mut Buffer<Color>, c: Color, mut a: Point2<isize>, mut yb: isize) {
-    if a[1] > yb {
-        std::mem::swap(&mut a[1], &mut yb);
-    }
-    let mut index = (a[0] + a[1] * buf.size[0] as isize) as usize;
-    for _i in a[1]..=yb {
-        buf.data[index] = c;
-        index += buf.size[0];
-    }
-}
-
-fn draw_line_hori(buf: &mut Buffer<Color>, c: Color, mut a: Point2<isize>, mut xb: isize) {
-    if a[0] > xb {
-        std::mem::swap(&mut a[0], &mut xb);
-    }
-    let mut index = (a[0] + a[1] * buf.size[0] as isize) as usize;
-    for _i in a[0]..=xb {
-        buf.data[index] = c;
-        index += 1;
-    }
-}
-
-fn draw_line_diag(buf: &mut Buffer<Color>, c: Color, mut l: Line2<isize>) {
-    if l[0][0] > l[1][0] {
-        l = [l[1], l[0]]
-    }
-    let mut index = l[0][0] + l[0][1] * buf.size[0] as isize;
-    let dy = (l[1][1] - l[0][1]).signum() * buf.size[0] as isize;
-    for _i in l[0][0]..=l[1][0] {
-        buf.data[index as usize] = c;
-        index += 1 + dy;
-    }
-}
-
-fn draw_line_brs(buf: &mut Buffer<Color>, c: Color, dx: isize, dy: isize, l: Line2<isize>) {
-    if dx.abs() > dy.abs() {
-        draw_line_brs_x(buf, c, dx, dy, l)
-    } else {
-        draw_line_brs_y(buf, c, dx, dy, l)
-    }
-}
-
-fn draw_line_brs_x(
-    buf: &mut Buffer<Color>,
-    c: Color,
-    mut dx: isize,
-    mut dy: isize,
-    mut l: Line2<isize>,
-) {
-    if dx < 0 {
-        l = [l[1], l[0]];
-        dx = l[1][0] - l[0][0];
-        dy = l[1][1] - l[0][1];
-    }
-    //println!("Drawing Line: {:?}", l);
-    let sign = dy.signum();
-    let mut err = (dy.abs() << 1) - dx;
-    let i1 = dy.abs() << 1;
-    let i2 = (dy.abs() - dx) << 1;
-    let mut index = l[0][0] + l[0][1] * buf.size[0] as isize;
-    for _i in l[0][0]..=l[1][0] {
-        buf.data[index as usize] = c;
-        index += 1;
-        if err < 0 {
-            err += i1;
-        } else {
-            index += sign * buf.size[0] as isize;
-            err += i2;
-        }
-    }
-}
-
-fn draw_line_brs_y(
-    buf: &mut Buffer<Color>,
-    c: Color,
-    mut dx: isize,
-    mut dy: isize,
-    mut l: Line2<isize>,
-) {
-    if dy < 0 {
-        //println!("Y Initial: [{}, {}], dy: {}", l[0], l[1], dy);
-        l = [l[1], l[0]];
-        dy = l[1][1] - l[0][1];
-        dx = l[1][0] - l[0][0];
-        //println!("Y Swapped: [{}, {}], dy: {}", l[0], l[1], dy);
-    }
-    //println!("Drawing Line: [{}, {}], dx: {}", l[0], l[1], dx);
-    let sign = dx.signum();
-    let mut err = (dx.abs() << 1) - dy;
-    let i1 = dx.abs() << 1;
-    let i2 = (dx.abs() - dy) << 1;
-    let mut index = l[0][0] + l[0][1] * buf.size[0] as isize;
-    for _i in l[0][1]..=l[1][1] {
-        buf.data[index as usize] = c;
-        index += buf.size[0] as isize;
-        if err < 0 {
-            err += i1;
-        } else {
-            index += sign;
-            err += i2;
-        }
-    }
-}
-
 pub fn rect_to_vertices<N: Scalar>(rect: &Line2<N>) -> [Point2<N>; 4] {
     [
         rect[0],
@@ -270,7 +117,7 @@ pub fn lb_clip(
         }
         Some(t)
     }
-    let mut bound = bound.clone();
+    let mut bound = *bound;
     // make sure that the line describing the bound is directed up and right
     if bound[0][0] > bound[1][0] {
         let temp = bound[1][0];
@@ -326,7 +173,7 @@ pub fn lb_clip(
 
     let mut clipped = [false, false];
 
-    let mut res = line.clone();
+    let mut res = *line;
 
     if relative_eq!(clip[0], 0.0) {
         clipped[0] = true;
