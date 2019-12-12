@@ -5,7 +5,7 @@ authors = ["Ash Walker <ash@ashwalker.net>"]
 
 [dependencies]
 approx = "^0.3"
-nalgebra = "^0.18"
+nalgebra = "^0.19"
 
 [profile.dev]
 opt-level = 1

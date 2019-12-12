@@ -1,10 +1,55 @@
-use na::{Matrix3, Point3};
+use na::Matrix3;
+
+use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
 #[derive(Clone, Debug)]
 pub struct Polyhedron<P> {
     pub points: Vec<P>,
     pub faces: Vec<[u16; 3]>,
+}
+
+impl<P> Polyhedron<P> {
+    pub fn map<O>(self, f: fn(P) -> O) -> Polyhedron<O> {
+        Polyhedron {
+            points: self.points.into_iter().map(f).collect::<Vec<_>>(),
+            faces: self.faces,
+        }
+    }
+
+    pub fn from<O: Into<P>>(o: Polyhedron<O>) -> Self {
+        o.map(Into::into)
+    }
+
+    pub fn into<O>(self) -> Polyhedron<O>
+    where
+        P: Into<O>,
+    {
+        self.map(Into::into)
+    }
+
+    pub fn points(&self) -> std::slice::Iter<'_, P> {
+        self.points.iter()
+    }
+
+    pub fn points_mut(&mut self) -> std::slice::IterMut<'_, P> {
+        self.points.iter_mut()
+    }
+
+    pub fn faces(&self) -> std::slice::Iter<'_, [u16; 3]> {
+        self.faces.iter()
+        // .map(|f| {
+        //     [
+        //         self.points[f[0] as usize],
+        //         self.points[f[1] as usize],
+        //         self.points[f[2] as usize],
+        //     ]
+        // })
+    }
+
+    pub fn faces_mut(&mut self) -> std::slice::IterMut<'_, [u16; 3]> {
+        self.faces.iter_mut()
+    }
 }
 
 impl<P> Index<usize> for Polyhedron<P> {
@@ -20,20 +65,46 @@ impl<P> IndexMut<usize> for Polyhedron<P> {
     }
 }
 
-impl Polyhedron<Point3<f32>> {
+impl<P: PartialEq + Clone> FromIterator<[P; 3]> for Polyhedron<P> {
+    fn from_iter<I: IntoIterator<Item = [P; 3]>>(iter: I) -> Self {
+        let mut points = Vec::new();
+        let faces =
+            iter.into_iter()
+                .map(|tri| {
+                    let mut map = tri.iter().map(|p| {
+                        match points.iter().enumerate().find(|(_, o)| *p == **o) {
+                            Some((i, _)) => i,
+                            None => {
+                                points.push(p.clone());
+                                points.len() - 1
+                            }
+                        }
+                    });
+                    [
+                        map.next().unwrap() as u16,
+                        map.next().unwrap() as u16,
+                        map.next().unwrap() as u16,
+                    ]
+                })
+                .collect::<Vec<_>>();
+        Self { points, faces }
+    }
+}
+
+impl Polyhedron<[f32; 3]> {
     pub fn cube() -> Self {
         Polyhedron {
             points: vec![
                 // back
-                [1.0, -1.0, -1.0].into(),
-                [-1.0, -1.0, -1.0].into(),
-                [-1.0, 1.0, -1.0].into(),
-                [1.0, 1.0, -1.0].into(),
+                [0.5, -0.5, -0.5],
+                [-0.5, -0.5, -0.5],
+                [-0.5, 0.5, -0.5],
+                [0.5, 0.5, -0.5],
                 // front
-                [-1.0, -1.0, 1.0].into(),
-                [1.0, -1.0, 1.0].into(),
-                [1.0, 1.0, 1.0].into(),
-                [-1.0, 1.0, 1.0].into(),
+                [-0.5, -0.5, 0.5],
+                [0.5, -0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [-0.5, 0.5, 0.5],
             ],
             faces: vec![
                 // back
@@ -62,14 +133,14 @@ impl Polyhedron<Point3<f32>> {
         Polyhedron {
             points: vec![
                 // center
-                [-1.0, 0.0, -1.0].into(),
-                [1.0, 0.0, -1.0].into(),
-                [1.0, 0.0, 1.0].into(),
-                [-1.0, 0.0, 1.0].into(),
+                [-0.5, 0.0, -0.5],
+                [0.5, 0.0, -0.5],
+                [0.5, 0.0, 0.5],
+                [-0.5, 0.0, 0.5],
                 // top
-                [0.0, 2.0, 0.0].into(),
+                [0.0, 0.5, 0.0],
                 // bottom
-                [0.0, -2.0, 0.0].into(),
+                [0.0, -0.5, 0.0],
             ],
             faces: vec![
                 // top
@@ -88,28 +159,43 @@ impl Polyhedron<Point3<f32>> {
 
     pub fn triangle() -> Self {
         Polyhedron {
-            points: vec![
-                [1.0, -1.0, 0.0].into(),
-                [0.0, 1.0, 0.0].into(),
-                [-1.0, -1.0, 0.0].into(),
-            ],
+            points: vec![[0.5, -0.5, -0.5], [-0.5, -0.5, -0.5], [0.0, -0.5, 0.5]],
             faces: vec![[0, 1, 2]],
         }
     }
 
-    pub fn plane() -> Self {
+    pub fn quad() -> Self {
         Polyhedron {
             points: vec![
-                [1.0, 0.0, -1.0].into(),
-                [-1.0, 0.0, -1.0].into(),
-                [-1.0, 0.0, 1.0].into(),
-                [1.0, 0.0, 1.0].into(),
+                [0.5, -0.5, -0.5],
+                [-0.5, -0.5, -0.5],
+                [-0.5, -0.5, 0.5],
+                [0.5, -0.5, 0.5],
+            ],
+            faces: vec![[0, 1, 2], [2, 3, 0]],
+        }
+    }
+
+    pub fn ramp_tri() -> Self {
+        Polyhedron {
+            points: vec![[0.5, -0.5, -0.5], [-0.5, -0.5, -0.5], [-0.5, 0.5, 0.5]],
+            faces: vec![[0, 1, 2]],
+        }
+    }
+
+    pub fn ramp_quad() -> Self {
+        Polyhedron {
+            points: vec![
+                [0.5, -0.5, -0.5],
+                [-0.5, -0.5, -0.5],
+                [-0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
             ],
             faces: vec![[0, 1, 2], [2, 3, 0]],
         }
     }
 
     pub fn inertia_moment(&self) -> Matrix3<f32> {
-        Matrix3::identity()
+        unimplemented!()
     }
 }
